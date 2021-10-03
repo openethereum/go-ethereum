@@ -146,6 +146,7 @@ var (
 		utils.SepoliaFlag,
 		utils.RinkebyFlag,
 		utils.GoerliFlag,
+		utils.XDAIFlag,
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
 		utils.EthStatsURLFlag,

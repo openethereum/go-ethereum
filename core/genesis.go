@@ -180,7 +180,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 	// We have the genesis block in database(perhaps in ancient database)
 	// but the corresponding state is missing.
 	header := rawdb.ReadHeader(db, stored, 0)
-	if _, err := state.New(header.Root, state.NewDatabaseWithConfig(db, nil), nil); err != nil {
+	if header == nil {
 		if genesis == nil {
 			genesis = DefaultGenesisBlock()
 		}
@@ -288,6 +288,8 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 		BaseFee:    g.BaseFee,
 		Difficulty: g.Difficulty,
 		MixDigest:  g.Mixhash,
+		Step:       big.NewInt(0),
+		Signature:  common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
 		Coinbase:   g.Coinbase,
 		Root:       root,
 	}
@@ -415,6 +417,23 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 		Difficulty: big.NewInt(0x20000),
 		Timestamp:  1633267481,
 		Alloc:      decodePrealloc(sepoliaAllocData),
+	}
+}
+
+// DefaultXDAIGenesisBlock returns the XDAI network genesis block.
+func DefaultXDAIGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.XDAIChainConfig,
+		Timestamp:  0,
+		ExtraData:  hexutil.MustDecode("0x"),
+		GasLimit:   0x989680,
+		Difficulty: big.NewInt(0x20000),
+		Alloc: GenesisAlloc{
+			common.HexToAddress("0x01"): GenesisAccount{Balance: big.NewInt(1)},
+			common.HexToAddress("0x02"): GenesisAccount{Balance: big.NewInt(1)},
+			common.HexToAddress("0x03"): GenesisAccount{Balance: big.NewInt(1)},
+			common.HexToAddress("0x04"): GenesisAccount{Balance: big.NewInt(1)},
+		},
 	}
 }
 

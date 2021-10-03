@@ -80,8 +80,10 @@ type Header struct {
 	GasUsed     uint64         `json:"gasUsed"          gencodec:"required"`
 	Time        uint64         `json:"timestamp"        gencodec:"required"`
 	Extra       []byte         `json:"extraData"        gencodec:"required"`
-	MixDigest   common.Hash    `json:"mixHash"`
-	Nonce       BlockNonce     `json:"nonce"`
+	Step        *big.Int       `json:"step"             gencodec:"required"`
+	Signature   []byte         `json:"signature"        gencodec:"required"`
+	MixDigest   common.Hash    `json:"mixHash"          rlp:"-"`
+	Nonce       BlockNonce     `json:"nonce"            rlp:"-"`
 
 	// BaseFee was added by EIP-1559 and is ignored in legacy headers.
 	BaseFee *big.Int `json:"baseFeePerGas" rlp:"optional"`

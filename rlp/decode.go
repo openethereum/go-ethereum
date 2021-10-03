@@ -390,18 +390,32 @@ func decodeByteArray(s *Stream, val reflect.Value) error {
 		slice[0] = s.byteval
 		s.kind = -1
 	case String:
-		if uint64(len(slice)) < size {
-			return &decodeError{msg: "input string too long", typ: val.Type()}
-		}
-		if uint64(len(slice)) > size {
-			return &decodeError{msg: "input string too short", typ: val.Type()}
-		}
-		if err := s.readFull(slice); err != nil {
-			return err
-		}
-		// Reject cases where single byte encoding should have been used.
-		if size == 1 && slice[0] < 128 {
-			return wrapStreamError(ErrCanonSize, val.Type())
+		if size == 1 {
+			tmp := make([]byte, 1, 1)
+			if err := s.readFull(tmp); err != nil {
+				return err
+			}
+			if int(tmp[0]) < len(compressed) {
+				copy(slice, compressed[tmp[0]])
+				return nil
+			} else {
+				copy(slice, tmp)
+			}
+			// Reject cases where single byte encoding should have been used.
+			if tmp[0] < 128 {
+				return wrapStreamError(ErrCanonSize, val.Type())
+			}
+			return nil
+		} else {
+			if uint64(len(slice)) < size {
+				return &decodeError{msg: "input string too long", typ: val.Type()}
+			}
+			if uint64(len(slice)) > size {
+				return &decodeError{msg: "input string too short", typ: val.Type()}
+			}
+			if err := s.readFull(slice); err != nil {
+				return err
+			}
 		}
 	case List:
 		return wrapStreamError(ErrExpectedString, val.Type())
@@ -647,11 +661,24 @@ func (s *Stream) Bytes() ([]byte, error) {
 		return []byte{s.byteval}, nil
 	case String:
 		b := make([]byte, size)
+		if size == 1 {
+			tmp := make([]byte, 1, 1)
+			if err := s.readFull(tmp); err != nil {
+				return nil, err
+			}
+			if int(tmp[0]) < len(compressed) {
+				copy(b, compressed[tmp[0]])
+				return b, nil
+			} else {
+				if tmp[0] < 128 {
+					return nil, ErrCanonSize
+				}
+				copy(b, tmp)
+				return b, nil
+			}
+		}
 		if err = s.readFull(b); err != nil {
 			return nil, err
-		}
-		if size == 1 && b[0] < 128 {
-			return nil, ErrCanonSize
 		}
 		return b, nil
 	default:

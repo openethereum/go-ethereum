@@ -160,6 +160,10 @@ var (
 		Name:  "sepolia",
 		Usage: "Sepolia network: pre-configured proof-of-work test network",
 	}
+	XDAIFlag = cli.BoolFlag{
+		Name:  "xdai",
+		Usage: "XDAI network: pre-configured XDAI network with regenesis",
+	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
@@ -1637,6 +1641,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultGoerliGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.GoerliGenesisHash)
+	case ctx.GlobalBool(XDAIFlag.Name):
+		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 100
+		}
+		cfg.Genesis = core.DefaultXDAIGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.XDAIGenesisHash)
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1337
@@ -1869,6 +1879,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultRinkebyGenesisBlock()
 	case ctx.GlobalBool(GoerliFlag.Name):
 		genesis = core.DefaultGoerliGenesisBlock()
+	case ctx.GlobalBool(XDAIFlag.Name):
+		genesis = core.DefaultXDAIGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}
