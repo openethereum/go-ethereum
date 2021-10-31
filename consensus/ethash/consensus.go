@@ -274,11 +274,13 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, pa
 	if header.Time <= parent.Time {
 		return errOlderBlockTime
 	}
-	// Verify the block's difficulty based on its timestamp and parent's difficulty
-	expected := ethash.CalcDifficulty(chain, header.Time, parent)
+	if !chain.Config().IsXDAI() {
+		// Verify the block's difficulty based on its timestamp and parent's difficulty
+		expected := ethash.CalcDifficulty(chain, header.Time, parent)
 
-	if expected.Cmp(header.Difficulty) != 0 {
-		return fmt.Errorf("invalid difficulty: have %v, want %v", header.Difficulty, expected)
+		if expected.Cmp(header.Difficulty) != 0 {
+			return fmt.Errorf("invalid difficulty: have %v, want %v", header.Difficulty, expected)
+		}
 	}
 	// Verify that the gas limit is <= 2^63-1
 	cap := uint64(0x7fffffffffffffff)
@@ -307,7 +309,7 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, pa
 		return consensus.ErrInvalidNumber
 	}
 	// Verify the engine specific seal securing the block
-	if seal {
+	if !chain.Config().IsXDAI() && seal {
 		if err := ethash.verifySeal(chain, header, false); err != nil {
 			return err
 		}
