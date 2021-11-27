@@ -29,8 +29,10 @@ func (h Header) MarshalJSON() ([]byte, error) {
 		GasUsed     hexutil.Uint64 `json:"gasUsed"          gencodec:"required"`
 		Time        hexutil.Uint64 `json:"timestamp"        gencodec:"required"`
 		Extra       hexutil.Bytes  `json:"extraData"        gencodec:"required"`
-		MixDigest   common.Hash    `json:"mixHash"`
-		Nonce       BlockNonce     `json:"nonce"`
+		Step        *big.Int       `json:"step"             gencodec:"required"`
+		Signature   hexutil.Bytes  `json:"signature"        gencodec:"required"`
+		MixDigest   common.Hash    `json:"mixHash"          rlp:"-"`
+		Nonce       BlockNonce     `json:"nonce"            rlp:"-"`
 		BaseFee     *hexutil.Big   `json:"baseFeePerGas" rlp:"optional"`
 		Hash        common.Hash    `json:"hash"`
 	}
@@ -48,6 +50,8 @@ func (h Header) MarshalJSON() ([]byte, error) {
 	enc.GasUsed = hexutil.Uint64(h.GasUsed)
 	enc.Time = hexutil.Uint64(h.Time)
 	enc.Extra = h.Extra
+	enc.Step = h.Step
+	enc.Signature = h.Signature
 	enc.MixDigest = h.MixDigest
 	enc.Nonce = h.Nonce
 	enc.BaseFee = (*hexutil.Big)(h.BaseFee)
@@ -71,8 +75,10 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		GasUsed     *hexutil.Uint64 `json:"gasUsed"          gencodec:"required"`
 		Time        *hexutil.Uint64 `json:"timestamp"        gencodec:"required"`
 		Extra       *hexutil.Bytes  `json:"extraData"        gencodec:"required"`
-		MixDigest   *common.Hash    `json:"mixHash"`
-		Nonce       *BlockNonce     `json:"nonce"`
+		Step        *big.Int        `json:"step"             gencodec:"required"`
+		Signature   *hexutil.Bytes  `json:"signature"        gencodec:"required"`
+		MixDigest   *common.Hash    `json:"mixHash"          rlp:"-"`
+		Nonce       *BlockNonce     `json:"nonce"            rlp:"-"`
 		BaseFee     *hexutil.Big    `json:"baseFeePerGas" rlp:"optional"`
 	}
 	var dec Header
@@ -131,6 +137,14 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		return errors.New("missing required field 'extraData' for Header")
 	}
 	h.Extra = *dec.Extra
+	if dec.Step == nil {
+		return errors.New("missing required field 'step' for Header")
+	}
+	h.Step = dec.Step
+	if dec.Signature == nil {
+		return errors.New("missing required field 'signature' for Header")
+	}
+	h.Signature = *dec.Signature
 	if dec.MixDigest != nil {
 		h.MixDigest = *dec.MixDigest
 	}
