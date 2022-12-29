@@ -354,8 +354,31 @@ func handleNewBlock(backend Backend, msg Decoder, peer *Peer) error {
 func handleBlockHeaders66(backend Backend, msg Decoder, peer *Peer) error {
 	// A batch of headers arrived to one of our previous requests
 	res := new(BlockHeadersPacket66)
-	if err := msg.Decode(res); err != nil {
+	resaura := new(AuraBlockHeadersPacket66)
+	if err := msg.Decode(resaura); err != nil {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
+	}
+	res.RequestId = resaura.RequestId
+	res.BlockHeadersPacket = make(BlockHeadersPacket, len(resaura.AuraBlockHeadersPacket))
+	for i := range resaura.AuraBlockHeadersPacket {
+		res.BlockHeadersPacket[i] = &types.Header{
+			ParentHash:  resaura.AuraBlockHeadersPacket[i].ParentHash,
+			UncleHash:   resaura.AuraBlockHeadersPacket[i].UncleHash,
+			Coinbase:    resaura.AuraBlockHeadersPacket[i].Coinbase,
+			Root:        resaura.AuraBlockHeadersPacket[i].Root,
+			TxHash:      resaura.AuraBlockHeadersPacket[i].TxHash,
+			ReceiptHash: resaura.AuraBlockHeadersPacket[i].ReceiptHash,
+			Bloom:       resaura.AuraBlockHeadersPacket[i].Bloom,
+			Difficulty:  resaura.AuraBlockHeadersPacket[i].Difficulty,
+			Number:      resaura.AuraBlockHeadersPacket[i].Number,
+			GasLimit:    resaura.AuraBlockHeadersPacket[i].GasLimit,
+			GasUsed:     resaura.AuraBlockHeadersPacket[i].GasUsed,
+			Time:        resaura.AuraBlockHeadersPacket[i].Time,
+			Extra:       resaura.AuraBlockHeadersPacket[i].Extra,
+			Signature:   resaura.AuraBlockHeadersPacket[i].Signature,
+			Step:        resaura.AuraBlockHeadersPacket[i].Step,
+			BaseFee:     resaura.AuraBlockHeadersPacket[i].BaseFee,
+		}
 	}
 	metadata := func() interface{} {
 		hashes := make([]common.Hash, len(res.BlockHeadersPacket))

@@ -63,6 +63,7 @@ type Genesis struct {
 	GasUsed    uint64      `json:"gasUsed"`
 	ParentHash common.Hash `json:"parentHash"`
 	BaseFee    *big.Int    `json:"baseFeePerGas"`
+	Signature  []byte      `json:"omitempty"`
 }
 
 func ReadGenesis(db ethdb.Database) (*Genesis, error) {
@@ -197,6 +198,9 @@ func CommitGenesisState(db ethdb.Database, triedb *trie.Database, hash common.Ha
 			genesis = DefaultGoerliGenesisBlock()
 		case params.SepoliaGenesisHash:
 			genesis = DefaultSepoliaGenesisBlock()
+		case params.GnosisChainHash:
+			genesis = DefaultGnosisGenesisBlock()
+
 		}
 		if genesis != nil {
 			alloc = genesis.Alloc
@@ -209,11 +213,12 @@ func CommitGenesisState(db ethdb.Database, triedb *trie.Database, hash common.Ha
 
 // GenesisAccount is an account in the state of the genesis block.
 type GenesisAccount struct {
-	Code       []byte                      `json:"code,omitempty"`
-	Storage    map[common.Hash]common.Hash `json:"storage,omitempty"`
-	Balance    *big.Int                    `json:"balance" gencodec:"required"`
-	Nonce      uint64                      `json:"nonce,omitempty"`
-	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
+	Constructor []byte                      `json:"constructor",omitempty`
+	Code        []byte                      `json:"code,omitempty"`
+	Storage     map[common.Hash]common.Hash `json:"storage,omitempty"`
+	Balance     *big.Int                    `json:"balance" gencodec:"required"`
+	Nonce       uint64                      `json:"nonce,omitempty"`
+	PrivateKey  []byte                      `json:"secretKey,omitempty"` // for tests
 }
 
 // field type overrides for gencodec
@@ -438,6 +443,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.GoerliChainConfig
 	case ghash == params.KilnGenesisHash:
 		return DefaultKilnGenesisBlock().Config
+	case ghash == params.GnosisChainHash:
+		return params.GnosisChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -462,6 +469,7 @@ func (g *Genesis) ToBlock() *types.Block {
 		MixDigest:  g.Mixhash,
 		Coinbase:   g.Coinbase,
 		Root:       root,
+		Signature:  g.Signature,
 	}
 	if g.GasLimit == 0 {
 		head.GasLimit = params.GenesisGasLimit
@@ -594,6 +602,32 @@ func DefaultKilnGenesisBlock() *Genesis {
 		panic(err)
 	}
 	return g
+}
+
+// DefaultSepoliaGenesisBlock returns the Sepolia network genesis block.
+func DefaultGnosisGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.GnosisChainConfig,
+		Nonce:      0,
+		GasLimit:   0x989680,
+		Difficulty: big.NewInt(0x20000),
+		Timestamp:  0,
+		Signature:  make([]byte, 65),
+		Alloc: GenesisAlloc{
+			common.HexToAddress("0x0000000000000000000000000000000000000001"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000002"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000003"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000004"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+		},
+	}
 }
 
 // DeveloperGenesisBlock returns the 'geth --dev' genesis block.

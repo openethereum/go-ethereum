@@ -67,11 +67,13 @@ func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 	}
 	p.td, p.head = status.TD, status.Head
 
+	// GNOSIS: the total difficulty on the main chain is much larger than
+	// 100 bits.
 	// TD at mainnet block #7753254 is 76 bits. If it becomes 100 million times
 	// larger, it will still fit within 100 bits
-	if tdlen := p.td.BitLen(); tdlen > 100 {
-		return fmt.Errorf("too large total difficulty: bitlen %d", tdlen)
-	}
+	// if tdlen := p.td.BitLen(); tdlen > 100 {
+	// 	return fmt.Errorf("too large total difficulty: bitlen %d", tdlen)
+	// }
 	return nil
 }
 
@@ -100,8 +102,8 @@ func (p *Peer) readStatus(network uint64, status *StatusPacket, genesis common.H
 	if status.Genesis != genesis {
 		return fmt.Errorf("%w: %x (!= %x)", errGenesisMismatch, status.Genesis, genesis)
 	}
-	if err := forkFilter(status.ForkID); err != nil {
-		return fmt.Errorf("%w: %v", errForkIDRejected, err)
-	}
+	// if err := forkFilter(status.ForkID); err != nil {
+	// 	return fmt.Errorf("%w: %v", errForkIDRejected, err)
+	// }
 	return nil
 }

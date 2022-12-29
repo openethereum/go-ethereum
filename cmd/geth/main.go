@@ -289,6 +289,9 @@ func prepare(ctx *cli.Context) {
 	case ctx.IsSet(utils.KilnFlag.Name):
 		log.Info("Starting Geth on Kiln testnet...")
 
+	case ctx.IsSet(utils.GnosisChainFlag.Name):
+		log.Info("Starting Geth on Gnosis mainnet...")
+
 	case ctx.IsSet(utils.DeveloperFlag.Name):
 		log.Info("Starting Geth in ephemeral dev mode...")
 		log.Warn(`You are running Geth in --dev mode. Please note the following:
