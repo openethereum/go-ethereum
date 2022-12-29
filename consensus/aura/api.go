@@ -26,3 +26,7 @@ type API struct {
 	chain consensus.ChainHeaderReader
 	aura  *Aura
 }
+
+func (api *API) Version() string {
+	return "0.1"
+}
