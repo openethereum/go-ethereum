@@ -27,9 +27,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/trie"
 )
 
@@ -248,10 +250,24 @@ func TestReadWriteGenesisAlloc(t *testing.T) {
 
 func TestGnosisChainGenesisBlock(t *testing.T) {
 	genesis := DefaultGnosisGenesisBlock()
+	genesisheader := genesis.ToBlock().Header()
 	t.Log(genesis.ToBlock().Header())
 	gh := genesis.ToBlock().Hash()
 	t.Logf("genesis block state root: %x", genesis.ToBlock().Root())
 	if !bytes.Equal(gh[:], params.GnosisChainHash[:]) {
 		t.Fatalf("invalid gnosis chain genesis block %x", gh)
+	}
+
+	var buf bytes.Buffer
+	genesis.ToBlock().EncodeRLP(&buf)
+
+	t.Log(buf)
+	var newb types.Block
+	if err := rlp.DecodeBytes(buf.Bytes(), &newb); err != nil {
+		t.Fatal(err)
+	}
+
+	if !bytes.Equal(newb.Hash().Bytes(), genesisheader.Hash().Bytes()) {
+		t.Fatalf("deserialized header mismatch %v != %v", newb.Header(), genesisheader)
 	}
 }
