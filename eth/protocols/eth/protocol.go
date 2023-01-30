@@ -177,13 +177,6 @@ type BlockHeadersPacket66 struct {
 	BlockHeadersPacket
 }
 
-type AuraBlockHeadersPacket []*types.AuraHeader
-
-type AuraBlockHeadersPacket66 struct {
-	RequestId uint64
-	AuraBlockHeadersPacket
-}
-
 // BlockHeadersRLPPacket represents a block header response, to use when we already
 // have the headers rlp encoded.
 type BlockHeadersRLPPacket []rlp.RawValue
