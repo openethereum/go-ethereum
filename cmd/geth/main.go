@@ -240,6 +240,7 @@ func init() {
 		snapshotCommand,
 		// See verkle.go
 		verkleCommand,
+		nethermindCommand,
 	}
 	sort.Sort(cli.CommandsByName(app.Commands))
 
