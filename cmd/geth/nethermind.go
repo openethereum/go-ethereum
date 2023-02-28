@@ -157,10 +157,18 @@ func nethermindImport(ctx *cli.Context) error {
 		}
 	}
 
-	// Import snapshot
+	// Import snapshot from file
+	batch := db.NewBatch()
+	for {
+		rawdb.WriteAccountSnapshot(batch, accountKey, snapshot.SlimAccountRLP())
+		rawdb.WriteStorageSnapshot(batch, accountHash, storageHash, data)
+	}
+	if err := batch.Write(); err != nil {
+		panic(err)
+	}
 
 	// Get the snapshot to reconstruct the trie from it
-	snaptree, err := snapshot.New(snapshot.Config{}, db, db, headRoot)
+	snaptree, err := snapshot.New(snapshot.Config{}, db, trie.NewDatabase(db), headRoot)
 	if err != nil {
 		panic(err)
 	}
