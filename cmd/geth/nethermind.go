@@ -17,9 +17,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 	"runtime"
 	"strconv"
@@ -32,8 +34,10 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state/snapshot"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/internal/flags"
 	"github.com/ethereum/go-ethereum/log"
@@ -117,27 +121,102 @@ func nethermindImport(ctx *cli.Context) error {
 	// Import the chain
 	start := time.Now()
 
+	// Connect to the Ethereum node over RPC// Connect to the Ethereum node over RPC
+	client, err := ethclient.Dial("https://localhost:8545")
+	if err != nil {
+		log.Crit("Failed to connect to the Ethereum node: %v", err)
+	}
+
+	// Get the latest block number
+	latestBlock, err := client.BlockNumber(context.Background())
+	if err != nil {
+		log.Crit("Failed to get latest block number: %v", err)
+	}
+
+	// Create a LevelDB database for storing the RLP of the blocks
+	// dbPath := filepath.Join(".", "blocksdb")
+	// os.MkdirAll(dbPath, os.ModePerm)
+	// db, err := rawdb.NewLevelDBDatabase(dbPath, 0, 0, "")
+	// if err != nil {
+	// 	log.Fatalf("Failed to create LevelDB database: %v", err)
+	// }
+
+	// Iterate over all the blocks since the genesis and insert their RLP in the database
+	var headRoot common.Hash
+	for i := uint64(0); i <= latestBlock; i++ {
+		block, err := client.BlockByNumber(context.Background(), new(big.Int).SetUint64(i))
+		if err != nil {
+			log.Crit("Failed to get block", "number", i, "error", err)
+		}
+
+		// Encode the block as RLP
+		blockBytes, err := rlp.EncodeToBytes(block)
+		if err != nil {
+			log.Crit("Failed to RLP-encode block", "number", i, "error", err)
+		}
+
+		// Insert the RLP of the block in the LevelDB database
+		rawdb.WriteCanonicalBlock(db, blockBytes, block.NumberU64())
+
+		if i == latestBlock {
+			copy(headRoot[:], block.Root().Bytes())
+		}
+	}
+
+	// Import snapshot
+
+	// Get the snapshot to reconstruct the trie from it
+	snaptree, err := snapshot.New(snapshot.Config{}, db, db, headRoot)
+	if err != nil {
+		panic(err)
+	}
+
+	// regenerate the trie from it
+	if err := snapshot.GenerateTrie(snaptree, headRoot, db, stateBloom); err != nil {
+		panic(err)
+	}
+
 	// var importErr error
 	opts := gorocksdb.NewDefaultOptions()
 	opts.SetCreateIfMissing(false)
 
-	idbHeaders, err := gorocksdb.Open(opts,  ctx.Args().First() + "/xdai/state/0")
+	idbHeaders, err := gorocksdb.Open(opts, ctx.Args().First()+"/xdai/headers")
 	if err != nil {
 		panic(err)
 	}
-	ro := gorocksdb.NewDefaultReadOptions()
-	defer ro.Close()
+	roh := gorocksdb.NewDefaultReadOptions()
+	defer roh.Close()
 
-	header, err := db.Get(ro, ctx.Args().Slice()[1])
+	header, err := db.Get(roh, ctx.Args().Slice()[1])
 	if err != nil {
 		panic(err)
 	}
-	defer header.Free()
 
+	var h types.Header
 	err = rlp.DecodeBytes(header[:], &h)
 	if err != nil {
 		panic(err)
 	}
+
+	idbNode, err := gorocksdb.Open(opts, ctx.Args().First()+"/xdai/state/0")
+	if err != nil {
+		panic(err)
+	}
+	// TODO check idbNode shouldn't be freed somehow
+	ror := gorocksdb.NewDefaultReadOptions()
+	defer ror.Close()
+
+	rootNode, err := db.Get(ror, h.Root[:])
+	if err != nil {
+		panic(err)
+	}
+	var root [17]common.Hash
+	err = rlp.DecodeBytes(rootNode, &root)
+	if err != nil {
+		panic(err)
+	}
+	// fonction recursive qui va chercher les enfants et les balance dans la DB
+	// db.NewBatch().Put(...)
 
 	// if ctx.Args().Len() == 1 {
 	// 	if err := utils.ImportChain(chain, ctx.Args().First()); err != nil {
