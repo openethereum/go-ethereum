@@ -149,14 +149,8 @@ func nethermindImport(ctx *cli.Context) error {
 			log.Crit("Failed to get block", "number", i, "error", err)
 		}
 
-		// Encode the block as RLP
-		blockBytes, err := rlp.EncodeToBytes(block)
-		if err != nil {
-			log.Crit("Failed to RLP-encode block", "number", i, "error", err)
-		}
-
 		// Insert the RLP of the block in the LevelDB database
-		rawdb.WriteCanonicalBlock(db, blockBytes, block.NumberU64())
+		rawdb.WriteBlock(db, block)
 
 		if i == latestBlock {
 			copy(headRoot[:], block.Root().Bytes())
