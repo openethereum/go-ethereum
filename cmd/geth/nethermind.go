@@ -154,6 +154,7 @@ func nethermindImport(ctx *cli.Context) error {
 
 		if i == latestBlock {
 			copy(headRoot[:], block.Root().Bytes())
+			rawdb.WriteHeadBlockHash(db, block.Hash())
 		}
 	}
 
