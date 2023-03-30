@@ -110,7 +110,7 @@ func NewPruner(db ethdb.Database, config Config) (*Pruner, error) {
 		log.Warn("Sanitizing bloomfilter size", "provided(MB)", config.BloomSize, "updated(MB)", 256)
 		config.BloomSize = 256
 	}
-	stateBloom, err := newStateBloomWithSize(config.BloomSize)
+	stateBloom, err := NewStateBloomWithSize(config.BloomSize)
 	if err != nil {
 		return nil, err
 	}
