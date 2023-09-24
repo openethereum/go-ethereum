@@ -56,6 +56,7 @@ require (
 	github.com/stretchr/testify v1.7.2
 	github.com/supranational/blst v0.3.8-0.20220526154634-513d2456b344
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c
 	github.com/tyler-smith/go-bip39 v1.0.1-0.20181017060643-dbb3b84ba2ef
 	github.com/urfave/cli/v2 v2.17.2-0.20221006022127-8f469abc00aa
 	golang.org/x/crypto v0.1.0
@@ -84,6 +85,9 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
+	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
+	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/garslo/gogen v0.0.0-20170306192744-1d203ffc1f61 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
