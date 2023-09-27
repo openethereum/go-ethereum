@@ -957,7 +957,7 @@ func (bc *BlockChain) Stop() {
 	//  - HEAD:     So we don't need to reprocess any blocks in the general case
 	//  - HEAD-1:   So we don't do large reorgs if our HEAD becomes an uncle
 	//  - HEAD-127: So we have a hard limit on the number of blocks reexecuted
-	if !bc.cacheConfig.TrieDirtyDisabled {
+	if /* !bc.cacheConfig.TrieDirtyDisabled */ false {
 		triedb := bc.triedb
 
 		for _, offset := range []uint64{0, 1, TriesInMemory - 1} {

@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -63,6 +64,7 @@ type Genesis struct {
 	GasUsed    uint64      `json:"gasUsed"`
 	ParentHash common.Hash `json:"parentHash"`
 	BaseFee    *big.Int    `json:"baseFeePerGas"`
+	Signature  []byte      `json:"signature,omitempty"`
 }
 
 func ReadGenesis(db ethdb.Database) (*Genesis, error) {
@@ -193,6 +195,11 @@ func CommitGenesisState(db ethdb.Database, triedb *trie.Database, blockhash comm
 			genesis = DefaultGoerliGenesisBlock()
 		case params.SepoliaGenesisHash:
 			genesis = DefaultSepoliaGenesisBlock()
+		case params.GnosisChainHash:
+			genesis = DefaultGnosisGenesisBlock()
+		case params.ChiadoGenesisHash:
+			genesis = DefaultChiadoGenesisBlock()
+
 		}
 		if genesis != nil {
 			alloc = genesis.Alloc
@@ -205,11 +212,12 @@ func CommitGenesisState(db ethdb.Database, triedb *trie.Database, blockhash comm
 
 // GenesisAccount is an account in the state of the genesis block.
 type GenesisAccount struct {
-	Code       []byte                      `json:"code,omitempty"`
-	Storage    map[common.Hash]common.Hash `json:"storage,omitempty"`
-	Balance    *big.Int                    `json:"balance" gencodec:"required"`
-	Nonce      uint64                      `json:"nonce,omitempty"`
-	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
+	Constructor []byte                      `json:"constructor,omitempty"`
+	Code        []byte                      `json:"code,omitempty"`
+	Storage     map[common.Hash]common.Hash `json:"storage,omitempty"`
+	Balance     *big.Int                    `json:"balance" gencodec:"required"`
+	Nonce       uint64                      `json:"nonce,omitempty"`
+	PrivateKey  []byte                      `json:"secretKey,omitempty"` // for tests
 }
 
 // field type overrides for gencodec
@@ -420,6 +428,24 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.SepoliaChainConfig
 	case ghash == params.GoerliGenesisHash:
 		return params.GoerliChainConfig
+	case ghash == params.GnosisChainHash:
+		// Load the config from the chainspec
+		params.GnosisChainConfig.Aura = new(params.AuthorityRoundParams)
+		data, err := os.ReadFile("xdai.json")
+		if err != nil {
+			panic(fmt.Sprintf("could not find the gnosis chain spec file: %v", err))
+		}
+		json.Unmarshal(data, params.GnosisChainConfig.Aura)
+		return params.GnosisChainConfig
+	case ghash == params.ChiadoGenesisHash:
+		// Load the config from the chainspec
+		params.GnosisChainConfig.Aura = new(params.AuthorityRoundParams)
+		data, err := os.ReadFile("chiado.json")
+		if err != nil {
+			panic(fmt.Sprintf("could not find the chiado spec file: %v", err))
+		}
+		json.Unmarshal(data, params.ChiadoConfig.Aura)
+		return params.GnosisChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -546,6 +572,59 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 		Difficulty: big.NewInt(0x20000),
 		Timestamp:  1633267481,
 		Alloc:      decodePrealloc(sepoliaAllocData),
+	}
+}
+
+// DefaultSepoliaGenesisBlock returns the Sepolia network genesis block.
+func DefaultGnosisGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.GnosisChainConfig,
+		Nonce:      0,
+		GasLimit:   0x989680,
+		Difficulty: big.NewInt(0x20000),
+		Timestamp:  0,
+		Signature:  make([]byte, 65),
+		Alloc: GenesisAlloc{
+			common.HexToAddress("0x0000000000000000000000000000000000000001"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000002"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000003"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000004"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+		},
+	}
+}
+
+// DefaultSepoliaGenesisBlock returns the Sepolia network genesis block.
+func DefaultChiadoGenesisBlock() *Genesis {
+	// TODO incorrect
+	return &Genesis{
+		Config:     params.GnosisChainConfig,
+		Nonce:      0,
+		GasLimit:   0x989680,
+		Difficulty: big.NewInt(0x20000),
+		Timestamp:  0,
+		Signature:  make([]byte, 65),
+		Alloc: GenesisAlloc{
+			common.HexToAddress("0x0000000000000000000000000000000000000001"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000002"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000003"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+			common.HexToAddress("0x0000000000000000000000000000000000000004"): GenesisAccount{
+				Balance: big.NewInt(1),
+			},
+		},
 	}
 }
 

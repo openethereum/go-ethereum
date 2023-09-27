@@ -105,6 +105,47 @@ var (
 			Epoch:  30000,
 		},
 	}
+	GnosisChainConfig = &ChainConfig{
+		ChainID:             big.NewInt(100),
+		HomesteadBlock:      big.NewInt(0),
+		DAOForkBlock:        big.NewInt(0),
+		DAOForkSupport:      true,
+		EIP150Block:         big.NewInt(0),
+		EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
+		EIP155Block:         big.NewInt(0),
+		EIP158Block:         big.NewInt(0),
+		ByzantiumBlock:      big.NewInt(0),
+		ConstantinopleBlock: big.NewInt(1_604_400),
+		PetersburgBlock:     big.NewInt(7_280_000),
+		IstanbulBlock:       big.NewInt(7_298_030),
+		MuirGlacierBlock:    big.NewInt(9_200_000),
+		BerlinBlock:         big.NewInt(16_101_500),
+		LondonBlock:         big.NewInt(19_040_000),
+		ArrowGlacierBlock:   big.NewInt(19_040_000),
+		GrayGlacierBlock:    big.NewInt(19_040_000),
+		Aura:                nil,
+	}
+	ChiadoConfig = &ChainConfig{
+		// TODO
+		ChainID:             big.NewInt(100),
+		HomesteadBlock:      big.NewInt(0),
+		DAOForkBlock:        big.NewInt(0),
+		DAOForkSupport:      true,
+		EIP150Block:         big.NewInt(0),
+		EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
+		EIP155Block:         big.NewInt(0),
+		EIP158Block:         big.NewInt(0),
+		ByzantiumBlock:      big.NewInt(0),
+		ConstantinopleBlock: big.NewInt(1_604_400),
+		PetersburgBlock:     big.NewInt(7_280_000),
+		IstanbulBlock:       big.NewInt(7_298_030),
+		MuirGlacierBlock:    big.NewInt(9_200_000),
+		BerlinBlock:         big.NewInt(16_101_500),
+		LondonBlock:         big.NewInt(19_040_000),
+		ArrowGlacierBlock:   big.NewInt(19_040_000),
+		GrayGlacierBlock:    big.NewInt(19_040_000),
+		Aura:                nil,
+	}
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Ethash consensus.
 	AllEthashProtocolChanges = &ChainConfig{
@@ -228,6 +269,8 @@ var NetworkNames = map[string]string{
 	MainnetChainConfig.ChainID.String(): "mainnet",
 	GoerliChainConfig.ChainID.String():  "goerli",
 	SepoliaChainConfig.ChainID.String(): "sepolia",
+	GnosisChainConfig.ChainID.String():  "gnosis",
+	ChiadoConfig.ChainID.String():       "chiado",
 }
 
 // ChainConfig is the core config which determines the blockchain settings.
@@ -275,8 +318,12 @@ type ChainConfig struct {
 	TerminalTotalDifficultyPassed bool `json:"terminalTotalDifficultyPassed,omitempty"`
 
 	// Various consensus engines
-	Ethash *EthashConfig `json:"ethash,omitempty"`
-	Clique *CliqueConfig `json:"clique,omitempty"`
+	Ethash *EthashConfig         `json:"ethash,omitempty"`
+	Clique *CliqueConfig         `json:"clique,omitempty"`
+	Aura   *AuthorityRoundParams `json:"aura,omitempty"`
+}
+
+type AuthorityRoundParams struct {
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -324,6 +371,12 @@ func (c *ChainConfig) Description() string {
 			banner += "Consensus: Beacon (proof-of-stake), merging from Clique (proof-of-authority)\n"
 		} else {
 			banner += "Consensus: Beacon (proof-of-stake), merged from Clique (proof-of-authority)\n"
+		}
+	case c.Aura != nil:
+		if c.TerminalTotalDifficulty == nil {
+			banner += "Consensus: Aura (proof-of-authority)\n"
+		} else {
+			banner += "Consensus: Beacon (proof-of-stake), merged from Aura (proof-of-authority)\n"
 		}
 	default:
 		banner += "Consensus: unknown\n"

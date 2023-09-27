@@ -23,6 +23,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/consensus/aura"
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -341,18 +342,19 @@ func (beacon *Beacon) Prepare(chain consensus.ChainHeaderReader, header *types.H
 
 // Finalize implements consensus.Engine and processes withdrawals on top.
 func (beacon *Beacon) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, withdrawals []*types.Withdrawal) {
-	if !beacon.IsPoSHeader(header) {
-		beacon.ethone.Finalize(chain, header, state, txs, uncles, nil)
-		return
+	// GNOSIS: force calling the underlying consensus engine since
+	// it only calls the reward contract. A cleaner approach would
+	// be to add the call to the reward contract here.
+	beacon.ethone.Finalize(chain, header, state, txs, uncles, nil)
+
+	// withdrawals processing.
+	if withdrawals != nil {
+		if auraEngine, ok := beacon.ethone.(*aura.Aura); ok {
+			if err := auraEngine.ExecuteSystemWithdrawals(withdrawals); err != nil {
+				panic(err)
+			}
+		}
 	}
-	// Withdrawals processing.
-	for _, w := range withdrawals {
-		// Convert amount from gwei to wei.
-		amount := new(big.Int).SetUint64(w.Amount)
-		amount = amount.Mul(amount, big.NewInt(params.GWei))
-		state.AddBalance(w.Address, amount)
-	}
-	// No block reward which is issued by consensus layer instead.
 }
 
 // FinalizeAndAssemble implements consensus.Engine, setting the final state and

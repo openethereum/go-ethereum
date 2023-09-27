@@ -152,6 +152,16 @@ var (
 		Usage:    "Sepolia network: pre-configured proof-of-work test network",
 		Category: flags.EthCategory,
 	}
+	GnosisChainFlag = &cli.BoolFlag{
+		Name:     "gnosis",
+		Usage:    "Gnosis chain network: pre-configured merged proof-of-authority test network",
+		Category: flags.EthCategory,
+	}
+	ChiadoFlag = &cli.BoolFlag{
+		Name:     "chiado",
+		Usage:    "Chiado network: pre-configured merged proof-of-authority test network",
+		Category: flags.EthCategory,
+	}
 
 	// Dev mode
 	DeveloperFlag = &cli.BoolFlag{
@@ -928,6 +938,8 @@ var (
 	TestnetFlags = []cli.Flag{
 		GoerliFlag,
 		SepoliaFlag,
+		GnosisChainFlag,
+		ChiadoFlag,
 	}
 	// NetworkFlags is the flag group of all built-in supported networks.
 	NetworkFlags = append([]cli.Flag{MainnetFlag}, TestnetFlags...)
@@ -957,6 +969,12 @@ func MakeDataDir(ctx *cli.Context) string {
 		}
 		if ctx.Bool(SepoliaFlag.Name) {
 			return filepath.Join(path, "sepolia")
+		}
+		if ctx.Bool(GnosisChainFlag.Name) {
+			return filepath.Join(path, "gnosis")
+		}
+		if ctx.Bool(ChiadoFlag.Name) {
+			return filepath.Join(path, "chiado")
 		}
 		return path
 	}
@@ -1008,6 +1026,10 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 		urls = params.SepoliaBootnodes
 	case ctx.Bool(GoerliFlag.Name):
 		urls = params.GoerliBootnodes
+	case ctx.Bool(GnosisChainFlag.Name):
+		urls = params.GnosisBootnodes
+	case ctx.Bool(ChiadoFlag.Name):
+		urls = params.ChiadoBootnodes
 	}
 
 	// don't apply defaults if BootstrapNodes is already set
@@ -1457,6 +1479,10 @@ func SetDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "goerli")
 	case ctx.Bool(SepoliaFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "sepolia")
+	case ctx.Bool(GnosisChainFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "gnosis")
+	case ctx.Bool(ChiadoFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "chiado")
 	}
 }
 
@@ -1613,7 +1639,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, GoerliFlag, SepoliaFlag)
+	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, GoerliFlag, SepoliaFlag, GnosisChainFlag, ChiadoFlag)
 	CheckExclusive(ctx, LightServeFlag, SyncModeFlag, "light")
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 	if ctx.String(GCModeFlag.Name) == "archive" && ctx.Uint64(TxLookupLimitFlag.Name) != 0 {
@@ -1761,6 +1787,18 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultGoerliGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.GoerliGenesisHash)
+	case ctx.Bool(GnosisChainFlag.Name):
+		if !ctx.IsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 100
+		}
+		cfg.Genesis = core.DefaultGoerliGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.GnosisChainGenesisHash)
+	case ctx.Bool(ChiadoFlag.Name):
+		if !ctx.IsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 10200
+		}
+		cfg.Genesis = core.DefaultGoerliGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.ChiadoGenesisHash)
 	case ctx.Bool(DeveloperFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1337
@@ -2087,6 +2125,10 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultSepoliaGenesisBlock()
 	case ctx.Bool(GoerliFlag.Name):
 		genesis = core.DefaultGoerliGenesisBlock()
+	case ctx.Bool(GnosisChainFlag.Name):
+		genesis = core.DefaultGnosisChainGenesisBlock()
+	case ctx.Bool(ChiadoFlag.Name):
+		genesis = core.DefaultChiadoGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}
