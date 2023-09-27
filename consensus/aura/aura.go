@@ -19,6 +19,7 @@ package aura
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"sync"
@@ -343,7 +344,7 @@ func (a *Aura) CalculateRewards(header *types.Header, _ []*types.Header, chain c
 	var rewardContractAddress BlockRewardContract
 	rewardContractAddress = BlockRewardContract{
 		blockNum: 9186425,
-		address: common.HexToAddress("0x481c034c6d9441db23ea48de68bcae812c5d39ba"),
+		address:  common.HexToAddress("0x481c034c6d9441db23ea48de68bcae812c5d39ba"),
 	}
 	if /*foundContract */ true {
 		beneficiaries := []common.Address{header.Coinbase}
