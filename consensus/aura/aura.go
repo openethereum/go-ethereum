@@ -449,14 +449,15 @@ func syscall(contractaddr common.Address, data []byte, chain consensus.ChainHead
 	msg := types.NewMessage(sysaddr, &contractaddr, 0, big.NewInt(0), math.MaxUint64, big.NewInt(0), nil, nil, data, nil, false)
 	txctx := core.NewEVMTxContext(msg)
 	blkctx := core.NewEVMBlockContext(header, chain.(*core.BlockChain), nil)
-	evm := vm.NewEVM(blkctx, txctx, statedb, chain.Config(), vm.Config{Debug: true /*, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/})
-	ret, restant, err := evm.Call(vm.AccountRef(sysaddr), contractaddr, data, math.MaxUint64, new(big.Int))
+	evm := vm.NewEVM(blkctx, txctx, statedb, chain.Config(), vm.Config{ /*Debug: true, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/ })
+	ret, _, err := evm.Call(vm.AccountRef(sysaddr), contractaddr, data, math.MaxUint64, new(big.Int))
 	if err != nil {
 		panic(err)
 	}
 	statedb.Finalise(true)
 	return ret, err
 }
+
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (a *Aura) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {

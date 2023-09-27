@@ -121,7 +121,7 @@ func simulateNextBlock(chaindb ethdb.Database) {
 		panic(err)
 	}
 
-	// updateBalanceAndNonce(common.HexToAddress("0000000000000000000000000000000000000001"), simstatedb, simtrie, "38578639494568384886", 0, nil)
+	updateBalanceAndNonce(common.HexToAddress("0000000000000000000000000000000000000001"), simstatedb, simtrie, "38578639494568384886", 0, nil)
 	updateBalanceAndNonce(common.HexToAddress("16f5c3dc347a5814b81553c7725d4ed9214c8a3c"), simstatedb, simtrie, "654791340401742673414", 91029, nil)
 	updateBalanceAndNonce(common.HexToAddress("2458f163c231beaa673c903894060430cca101be"), simstatedb, simtrie, "295160057774628839", 3, nil)
 	updateBalanceAndNonce(common.HexToAddress("6bbe78ee9e474842dbd4ab4987b3cefe88426a92"), simstatedb, simtrie, "17350471453192861357591", 1, nil)
@@ -292,6 +292,7 @@ func nethermindImport(ctx *cli.Context) error {
 
 	// chain, db := utils.MakeChain(ctx, stack, false)
 	db := utils.MakeChainDatabase(ctx, stack, false)
+	defer db.Close()
 	triedb := trie.NewDatabase(db)
 	core.SetupGenesisBlock(db, triedb, core.DefaultGnosisGenesisBlock())
 
@@ -368,9 +369,9 @@ func nethermindImport(ctx *cli.Context) error {
 	// 	}
 	// }
 
-	// importStateFromFile(db)
+	importStateFromFile(db)
 	// simulateNextBlock(db)
-	// rebuildSnapshot(db)
+	rebuildSnapshot(db)
 	err = importCode(db, "/root/mainnet/execution-data/nethermind_db")
 	if err != nil {
 		panic(err)
