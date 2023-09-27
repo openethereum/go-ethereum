@@ -35,6 +35,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -481,7 +482,20 @@ func withdrawalAbi() abi.ABI {
 
 func syscall(contractaddr common.Address, data []byte, chain consensus.ChainHeaderReader, header *types.Header, statedb *state.StateDB) ([]byte, error) {
 	sysaddr := common.HexToAddress("fffffffffffffffffffffffffffffffffffffffe")
-	msg := types.NewMessage(sysaddr, &contractaddr, 0, big.NewInt(0), math.MaxUint64, big.NewInt(0), nil, nil, data, nil, false)
+	msg := &core.Message{
+		To:                &contractaddr,
+		From:              sysaddr,
+		Nonce:             0,
+		Value:             big.NewInt(0),
+		GasLimit:          math.MaxUint64,
+		GasPrice:          big.NewInt(0),
+		GasFeeCap:         nil,
+		GasTipCap:         nil,
+		Data:              data,
+		AccessList:        nil,
+		BlobHashes:        nil,
+		SkipAccountChecks: false,
+	}
 	txctx := core.NewEVMTxContext(msg)
 	blkctx := core.NewEVMBlockContext(header, chain.(*core.BlockChain), nil)
 	evm := vm.NewEVM(blkctx, txctx, statedb, chain.Config(), vm.Config{ /*Debug: true, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/ })
@@ -554,8 +568,8 @@ func (a *Aura) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 	}}
 }
 
-func (a *Aura) ExecuteSystemWithdrawals(withdrawals []*types.Withdrawal) error {
-	withdrawalContactAddress := common.HexToAddress("")
+func (a *Aura) ExecuteSystemWithdrawals(withdrawals []*types.Withdrawal, chain consensus.ChainHeaderReader, header *types.Header, statedb *state.StateDB) error {
+	withdrawalContactAddress := common.HexToAddress("0x0B98057eA310F4d31F2a452B414647007d1645d9")
 	maxFailedWithdrawalsToProcess := big.NewInt(4)
 	amounts := make([]uint64, 0, len(withdrawals))
 	addresses := make([]common.Address, 0, len(withdrawals))
@@ -569,7 +583,7 @@ func (a *Aura) ExecuteSystemWithdrawals(withdrawals []*types.Withdrawal) error {
 		return err
 	}
 
-	_, err = syscall(withdrawalContractAddress, packed)
+	_, err = syscall(withdrawalContactAddress, packed, chain, header, statedb)
 	if err != nil {
 		log.Warn("ExecuteSystemWithdrawals", "err", err)
 	}

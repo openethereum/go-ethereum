@@ -1792,7 +1792,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 			cfg.NetworkId = 100
 		}
 		cfg.Genesis = core.DefaultGoerliGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.GnosisChainGenesisHash)
+		SetDNSDiscoveryDefaults(cfg, params.GnosisChainHash)
 	case ctx.Bool(ChiadoFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 10200
@@ -2126,7 +2126,7 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 	case ctx.Bool(GoerliFlag.Name):
 		genesis = core.DefaultGoerliGenesisBlock()
 	case ctx.Bool(GnosisChainFlag.Name):
-		genesis = core.DefaultGnosisChainGenesisBlock()
+		genesis = core.DefaultGnosisGenesisBlock()
 	case ctx.Bool(ChiadoFlag.Name):
 		genesis = core.DefaultChiadoGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):

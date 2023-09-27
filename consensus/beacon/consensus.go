@@ -350,7 +350,7 @@ func (beacon *Beacon) Finalize(chain consensus.ChainHeaderReader, header *types.
 	// withdrawals processing.
 	if withdrawals != nil {
 		if auraEngine, ok := beacon.ethone.(*aura.Aura); ok {
-			if err := auraEngine.ExecuteSystemWithdrawals(withdrawals); err != nil {
+			if err := auraEngine.ExecuteSystemWithdrawals(withdrawals, chain, header, state); err != nil {
 				panic(err)
 			}
 		}
