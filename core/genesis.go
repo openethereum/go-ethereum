@@ -395,6 +395,10 @@ func LoadChainConfig(db ethdb.Database, genesis *Genesis) (*params.ChainConfig, 
 	if stored != (common.Hash{}) {
 		storedcfg := rawdb.ReadChainConfig(db, stored)
 		if storedcfg != nil {
+			// GNOSIS: force this field to true since the conversion has been
+			// made with an older version of geth, that did not have this field
+			// and therefore could not store it in the db.
+			storedcfg.TerminalTotalDifficultyPassed = true
 			return storedcfg, nil
 		}
 	}
@@ -469,6 +473,7 @@ func (g *Genesis) ToBlock() *types.Block {
 		Difficulty: g.Difficulty,
 		MixDigest:  g.Mixhash,
 		Coinbase:   g.Coinbase,
+		Signature:  g.Signature,
 		Root:       root,
 	}
 	if g.GasLimit == 0 {

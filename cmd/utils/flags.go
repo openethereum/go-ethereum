@@ -1791,13 +1791,13 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 100
 		}
-		cfg.Genesis = core.DefaultGoerliGenesisBlock()
+		cfg.Genesis = core.DefaultGnosisGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.GnosisChainHash)
 	case ctx.Bool(ChiadoFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 10200
 		}
-		cfg.Genesis = core.DefaultGoerliGenesisBlock()
+		cfg.Genesis = core.DefaultChiadoGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.ChiadoGenesisHash)
 	case ctx.Bool(DeveloperFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
