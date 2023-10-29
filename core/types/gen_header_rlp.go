@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func (obj *Header) EncodeRLP(_w io.Writer) error {
@@ -213,7 +214,8 @@ func (h *Header) DecodeRLP(s *rlp.Stream) error {
 	if len(b) != 32 {
 		return fmt.Errorf("wrong size for UncleHash: %d", len(b))
 	}
-	copy(h.WithdrawalsHash[:], b)
+	h.WithdrawalsHash = new(common.Hash)
+	copy((*h.WithdrawalsHash)[:], b)
 
 	if err := s.ListEnd(); err != nil {
 		return fmt.Errorf("close header struct: %w", err)
