@@ -126,7 +126,7 @@ var (
 		ShanghaiTime:                  newUint64(1690889660),
 		TerminalTotalDifficulty:       GnosisChainTerminalTotalDifficulty,
 		TerminalTotalDifficultyPassed: true,
-		Aura:                          nil,
+		Aura:                          &AuthorityRoundParams{},
 	}
 	ChiadoConfig = &ChainConfig{
 		// TODO
