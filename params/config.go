@@ -130,7 +130,7 @@ var (
 	}
 	ChiadoConfig = &ChainConfig{
 		// TODO
-		ChainID:                       big.NewInt(100),
+		ChainID:                       big.NewInt(100200),
 		HomesteadBlock:                big.NewInt(0),
 		DAOForkBlock:                  big.NewInt(0),
 		DAOForkSupport:                true,
