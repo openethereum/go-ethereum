@@ -36,7 +36,8 @@ var (
 func newUint64(val uint64) *uint64 { return &val }
 
 var (
-	MainnetTerminalTotalDifficulty, _ = new(big.Int).SetString("58_750_000_000_000_000_000_000", 0)
+	MainnetTerminalTotalDifficulty, _     = new(big.Int).SetString("58_750_000_000_000_000_000_000", 0)
+	GnosisChainTerminalTotalDifficulty, _ = new(big.Int).SetString("8_626_000_110_427_540_000_000_000_000_000_000_000_000_000_000", 0)
 
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
 	MainnetChainConfig = &ChainConfig{
@@ -123,6 +124,7 @@ var (
 		BerlinBlock:                   big.NewInt(16_101_500),
 		LondonBlock:                   big.NewInt(19_040_000),
 		ShanghaiTime:                  newUint64(1690889660),
+		TerminalTotalDifficulty:       GnosisChainTerminalTotalDifficulty,
 		TerminalTotalDifficultyPassed: true,
 		Aura:                          nil,
 	}
