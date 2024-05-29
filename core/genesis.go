@@ -32,6 +32,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
@@ -123,6 +124,35 @@ func (ga *GenesisAlloc) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// SysCreate is a special (system) contract creation methods for genesis constructors.
+func SysCreate(contract common.Address, data []byte, chainConfig *params.ChainConfig, statedb *state.StateDB, header *types.Header) (result []byte, err error) {
+	msg := &Message{
+		From:     contract,
+		Nonce:    0,
+		Value:    big.NewInt(0),
+		GasLimit: math.MaxUint64,
+		GasPrice: big.NewInt(0),
+		// GasFeeCap, GasTipCap,
+		Data:   data,
+		isFree: true,
+	}
+	vmConfig := vm.Config{}
+	// Create a new context to be used in the EVM environment
+	author := &contract
+	txContext := NewEVMTxContext(msg)
+	blockContext := NewEVMBlockContext(header, nil, author)
+	evm := vm.NewEVM(blockContext, txContext, statedb, chainConfig, vmConfig)
+
+	ret, _, err := evm.SysCreate(
+		vm.AccountRef(msg.From),
+		msg.Data,
+		msg.GasLimit,
+		msg.Value,
+		contract,
+	)
+	return ret, err
+}
+
 // hash computes the state root according to the genesis specification.
 func (ga *GenesisAlloc) hash(isVerkle bool) (common.Hash, error) {
 	// If a genesis-time verkle trie is requested, create a trie config
@@ -146,7 +176,11 @@ func (ga *GenesisAlloc) hash(isVerkle bool) (common.Hash, error) {
 		if account.Balance != nil {
 			statedb.AddBalance(addr, account.Balance)
 		}
-		statedb.SetCode(addr, account.Code)
+		if len(account.Constructor) != 0 {
+			SysCreate(addr, account.Constructor, nil, statedb, nil)
+		} else {
+			statedb.SetCode(addr, account.Code)
+		}
 		statedb.SetNonce(addr, account.Nonce)
 		for key, value := range account.Storage {
 			statedb.SetState(addr, key, value)
@@ -167,7 +201,12 @@ func (ga *GenesisAlloc) flush(db ethdb.Database, triedb *trie.Database, blockhas
 		if account.Balance != nil {
 			statedb.AddBalance(addr, account.Balance)
 		}
-		statedb.SetCode(addr, account.Code)
+		log.Info("adding account", "addr", addr, "constructor", account.Constructor, "code", account.Code)
+		if len(account.Constructor) != 0 {
+			SysCreate(addr, account.Constructor, nil, statedb, nil)
+		} else {
+			statedb.SetCode(addr, account.Code)
+		}
 		statedb.SetNonce(addr, account.Nonce)
 		for key, value := range account.Storage {
 			statedb.SetState(addr, key, value)
@@ -194,11 +233,12 @@ func (ga *GenesisAlloc) flush(db ethdb.Database, triedb *trie.Database, blockhas
 
 // GenesisAccount is an account in the state of the genesis block.
 type GenesisAccount struct {
-	Code       []byte                      `json:"code,omitempty"`
-	Storage    map[common.Hash]common.Hash `json:"storage,omitempty"`
-	Balance    *big.Int                    `json:"balance" gencodec:"required"`
-	Nonce      uint64                      `json:"nonce,omitempty"`
-	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
+	Constructor []byte                      `json:"constructor,omitempty"` // deployment code
+	Code        []byte                      `json:"code,omitempty"`
+	Storage     map[common.Hash]common.Hash `json:"storage,omitempty"`
+	Balance     *big.Int                    `json:"balance" gencodec:"required"`
+	Nonce       uint64                      `json:"nonce,omitempty"`
+	PrivateKey  []byte                      `json:"secretKey,omitempty"` // for tests
 }
 
 // field type overrides for gencodec
@@ -217,11 +257,12 @@ type genesisSpecMarshaling struct {
 }
 
 type genesisAccountMarshaling struct {
-	Code       hexutil.Bytes
-	Balance    *math.HexOrDecimal256
-	Nonce      math.HexOrDecimal64
-	Storage    map[storageJSON]storageJSON
-	PrivateKey hexutil.Bytes
+	Constructor hexutil.Bytes
+	Code        hexutil.Bytes
+	Balance     *math.HexOrDecimal256
+	Nonce       math.HexOrDecimal64
+	Storage     map[storageJSON]storageJSON
+	PrivateKey  hexutil.Bytes
 }
 
 // storageJSON represents a 256 bit byte array, but allows less than 256 bits when
