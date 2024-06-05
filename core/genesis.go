@@ -177,7 +177,13 @@ func (ga *GenesisAlloc) hash(isVerkle bool) (common.Hash, error) {
 			statedb.AddBalance(addr, account.Balance)
 		}
 		if len(account.Constructor) != 0 {
-			SysCreate(addr, account.Constructor, nil, statedb, &types.Header{})
+			// hardcode chiado since this is the only use case we have for the time being.
+			// things could be cleaner, but it would increase the diff with geth.
+			code, err := SysCreate(addr, account.Constructor, params.ChiadoChainConfig, statedb, &types.Header{Difficulty: big.NewInt(131072), Number: big.NewInt(0)})
+			if err != nil {
+				panic(err)
+			}
+			statedb.SetCode(addr, code)
 		} else {
 			statedb.SetCode(addr, account.Code)
 		}
