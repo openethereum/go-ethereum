@@ -177,7 +177,7 @@ func (ga *GenesisAlloc) hash(isVerkle bool) (common.Hash, error) {
 			statedb.AddBalance(addr, account.Balance)
 		}
 		if len(account.Constructor) != 0 {
-			SysCreate(addr, account.Constructor, nil, statedb, nil)
+			SysCreate(addr, account.Constructor, nil, statedb, &types.Header{})
 		} else {
 			statedb.SetCode(addr, account.Code)
 		}
