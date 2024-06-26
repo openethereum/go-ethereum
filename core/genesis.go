@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -172,7 +173,16 @@ func (ga *GenesisAlloc) hash(isVerkle bool) (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	for addr, account := range *ga {
+	keys := make([]string, len(*ga))
+	i := 0
+	for k := range *ga {
+		keys[i] = string(k.Bytes())
+		i++
+	}
+	slices.Sort(keys)
+	for _, key := range keys {
+		addr := common.BytesToAddress([]byte(key))
+		account := (*ga)[addr]
 		if account.Balance != nil {
 			statedb.AddBalance(addr, account.Balance)
 		}
@@ -184,10 +194,11 @@ func (ga *GenesisAlloc) hash(isVerkle bool) (common.Hash, error) {
 				panic(err)
 			}
 			statedb.SetCode(addr, code)
+			statedb.SetNonce(addr, 1)
 		} else {
 			statedb.SetCode(addr, account.Code)
+			statedb.SetNonce(addr, account.Nonce)
 		}
-		statedb.SetNonce(addr, account.Nonce)
 		for key, value := range account.Storage {
 			statedb.SetState(addr, key, value)
 		}
@@ -203,17 +214,33 @@ func (ga *GenesisAlloc) flush(db ethdb.Database, triedb *trie.Database, blockhas
 	if err != nil {
 		return err
 	}
-	for addr, account := range *ga {
+	keys := make([]string, len(*ga))
+	i := 0
+	for k := range *ga {
+		keys[i] = string(k.Bytes())
+		i++
+	}
+	slices.Sort(keys)
+	for _, key := range keys {
+		addr := common.BytesToAddress([]byte(key))
+		account := (*ga)[addr]
 		if account.Balance != nil {
 			statedb.AddBalance(addr, account.Balance)
 		}
 		log.Info("adding account", "addr", addr, "constructor", account.Constructor, "code", account.Code)
 		if len(account.Constructor) != 0 {
-			SysCreate(addr, account.Constructor, nil, statedb, nil)
+			// hardcode chiado since this is the only use case we have for the time being.
+			// things could be cleaner, but it would increase the diff with geth.
+			code, err := SysCreate(addr, account.Constructor, params.ChiadoChainConfig, statedb, &types.Header{Difficulty: big.NewInt(131072), Number: big.NewInt(0)})
+			if err != nil {
+				panic(err)
+			}
+			statedb.SetCode(addr, code)
+			statedb.SetNonce(addr, 1)
 		} else {
 			statedb.SetCode(addr, account.Code)
+			statedb.SetNonce(addr, account.Nonce)
 		}
-		statedb.SetNonce(addr, account.Nonce)
 		for key, value := range account.Storage {
 			statedb.SetState(addr, key, value)
 		}
