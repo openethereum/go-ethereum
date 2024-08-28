@@ -19,6 +19,7 @@ package miner
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -963,8 +964,34 @@ func (w *worker) prepareWork(genParams *generateParams) (*environment, error) {
 
 	b, ok := w.engine.(*beacon.Beacon)
 	if ok {
+		if header.Difficulty == nil {
+			header.Difficulty = common.Big0
+		}
 		b.SetAuraSyscall(func(contractaddr common.Address, data []byte) ([]byte, error) {
-			return nil, nil
+			sysaddr := common.HexToAddress("fffffffffffffffffffffffffffffffffffffffe")
+			msg := &core.Message{
+				To:                &contractaddr,
+				From:              sysaddr,
+				Nonce:             0,
+				Value:             big.NewInt(0),
+				GasLimit:          math.MaxUint64,
+				GasPrice:          big.NewInt(0),
+				GasFeeCap:         nil,
+				GasTipCap:         nil,
+				Data:              data,
+				AccessList:        nil,
+				BlobHashes:        nil,
+				SkipAccountChecks: false,
+			}
+			context := core.NewEVMBlockContext(header, w.chain, nil)
+			txctx := core.NewEVMTxContext(msg)
+			evm := vm.NewEVM(context, txctx, state, w.chainConfig, vm.Config{ /*Debug: true, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/ })
+			ret, _, err := evm.Call(vm.AccountRef(sysaddr), contractaddr, data, math.MaxUint64, new(big.Int))
+			if err != nil {
+				panic(err)
+			}
+			state.Finalise(true)
+			return ret, err
 		})
 	}
 	// Run the consensus preparation with the default or customized consensus engine.
@@ -979,6 +1006,9 @@ func (w *worker) prepareWork(genParams *generateParams) (*environment, error) {
 	if err != nil {
 		log.Error("Failed to create sealing context", "err", err)
 		return nil, err
+	}
+	if ok {
+		b.AuraPrepare(w.chain, header, state)
 	}
 	if header.ParentBeaconRoot != nil {
 		context := core.NewEVMBlockContext(header, w.chain, nil)

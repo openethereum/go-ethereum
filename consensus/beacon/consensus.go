@@ -447,7 +447,7 @@ func (beacon *Beacon) IsPoSHeader(header *types.Header) bool {
 	// return header.Number.Cmp(big.NewInt())
 	// non-uint64 block numbers are 2,92271023×10¹² years in
 	// the future, but better be ready.
-	return !header.Number.IsInt64() || header.Number.Uint64() >= params.GnosisForkBlock
+	return !header.Number.IsInt64() || header.Number.Uint64() >= params.GnosisForkBlock || header.Difficulty.Cmp(common.Big0) == 0
 }
 
 // InnerEngine returns the embedded eth1 consensus engine.
@@ -487,5 +487,9 @@ func (beacon *Beacon) SetAuraSyscall(sc aura.Syscall) {
 }
 
 func (beacon *Beacon) AuraPrepare(chain consensus.ChainHeaderReader, header *types.Header, statedb *state.StateDB) {
+	// mark down if the current chain has merged
+	if a, ok := beacon.ethone.(*aura.AuRa); ok {
+		a.SetMerged(beacon.IsPoSHeader(header))
+	}
 	beacon.ethone.Prepare(chain, header, statedb)
 }

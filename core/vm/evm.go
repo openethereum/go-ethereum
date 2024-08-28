@@ -448,7 +448,9 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	// Create a new account on the state
 	snapshot := evm.StateDB.Snapshot()
 	evm.StateDB.CreateAccount(address)
-	if evm.chainRules.IsEIP158 {
+	// On gnosis chains, this is activated as part of SpuriousDragon in
+	// spite of being part of eip 161.
+	if evm.chainRules.IsEIP155 {
 		evm.StateDB.SetNonce(address, 1)
 	}
 	evm.Context.Transfer(evm.StateDB, caller.Address(), address, value)
@@ -514,7 +516,7 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 // Create creates a new contract using code as deployment code.
 func (evm *EVM) Create(caller ContractRef, code []byte, gas uint64, value *big.Int) (ret []byte, contractAddr common.Address, leftOverGas uint64, err error) {
 	contractAddr = crypto.CreateAddress(caller.Address(), evm.StateDB.GetNonce(caller.Address()))
-	return evm.create(caller, &codeAndHash{code: code}, gas, value, contractAddr, CREATE, false)
+	return evm.create(caller, &codeAndHash{code: code}, gas, value, contractAddr, CREATE, true)
 }
 
 // Create2 creates a new contract using code as deployment code.
