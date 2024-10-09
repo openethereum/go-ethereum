@@ -202,7 +202,6 @@ func (miner *Miner) prepareWork(genParams *generateParams, witness bool) (*envir
 	if err != nil {
 		return nil, err
 	}
-	state.StartPrefetcher("miner")
 
 	b, ok := miner.engine.(*beacon.Beacon)
 	if ok {
@@ -212,18 +211,19 @@ func (miner *Miner) prepareWork(genParams *generateParams, witness bool) (*envir
 		b.SetAuraSyscall(func(contractaddr common.Address, data []byte) ([]byte, error) {
 			sysaddr := common.HexToAddress("fffffffffffffffffffffffffffffffffffffffe")
 			msg := &core.Message{
-				To:                &contractaddr,
-				From:              sysaddr,
-				Nonce:             0,
-				Value:             big.NewInt(0),
-				GasLimit:          math.MaxUint64,
-				GasPrice:          big.NewInt(0),
-				GasFeeCap:         nil,
-				GasTipCap:         nil,
-				Data:              data,
-				AccessList:        nil,
-				BlobHashes:        nil,
-				SkipAccountChecks: false,
+				To:               &contractaddr,
+				From:             sysaddr,
+				Nonce:            0,
+				Value:            big.NewInt(0),
+				GasLimit:         math.MaxUint64,
+				GasPrice:         big.NewInt(0),
+				GasFeeCap:        nil,
+				GasTipCap:        nil,
+				Data:             data,
+				AccessList:       nil,
+				BlobHashes:       nil,
+				SkipNonceChecks:  false,
+				SkipFromEOACheck: false,
 			}
 			context := core.NewEVMBlockContext(header, miner.chain, nil)
 			txctx := core.NewEVMTxContext(msg)

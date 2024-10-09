@@ -86,18 +86,19 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		b.SetAuraSyscall(func(contractaddr common.Address, data []byte) ([]byte, error) {
 			sysaddr := common.HexToAddress("fffffffffffffffffffffffffffffffffffffffe")
 			msg := &Message{
-				To:                &contractaddr,
-				From:              sysaddr,
-				Nonce:             0,
-				Value:             big.NewInt(0),
-				GasLimit:          math.MaxUint64,
-				GasPrice:          big.NewInt(0),
-				GasFeeCap:         nil,
-				GasTipCap:         nil,
-				Data:              data,
-				AccessList:        nil,
-				BlobHashes:        nil,
-				SkipAccountChecks: false,
+				To:               &contractaddr,
+				From:             sysaddr,
+				Nonce:            0,
+				Value:            big.NewInt(0),
+				GasLimit:         math.MaxUint64,
+				GasPrice:         big.NewInt(0),
+				GasFeeCap:        nil,
+				GasTipCap:        nil,
+				Data:             data,
+				AccessList:       nil,
+				BlobHashes:       nil,
+				SkipNonceChecks:  false,
+				SkipFromEOACheck: false,
 			}
 			txctx := NewEVMTxContext(msg)
 			evm := vm.NewEVM(context, txctx, statedb, p.chain.Config(), vm.Config{ /*Debug: true, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/ })
