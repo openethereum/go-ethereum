@@ -539,7 +539,7 @@ func (evm *EVM) initNewContract(contract *Contract, address common.Address, valu
 
 	// Check whether the max code size has been exceeded, assign err if the case.
 	if evm.chainRules.IsShanghai && len(ret) > params.MaxCodeSize {
-		err = ErrMaxCodeSizeExceeded
+		return nil, ErrMaxCodeSizeExceeded
 	}
 
 	// Reject code starting with 0xEF if EIP-3541 is enabled.
