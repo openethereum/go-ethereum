@@ -19,7 +19,6 @@ package miner
 import (
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -208,33 +207,8 @@ func (miner *Miner) prepareWork(genParams *generateParams, witness bool) (*envir
 		if header.Difficulty == nil {
 			header.Difficulty = common.Big0
 		}
-		b.SetAuraSyscall(func(contractaddr common.Address, data []byte) ([]byte, error) {
-			sysaddr := common.HexToAddress("fffffffffffffffffffffffffffffffffffffffe")
-			msg := &core.Message{
-				To:               &contractaddr,
-				From:             sysaddr,
-				Nonce:            0,
-				Value:            big.NewInt(0),
-				GasLimit:         math.MaxUint64,
-				GasPrice:         big.NewInt(0),
-				GasFeeCap:        nil,
-				GasTipCap:        nil,
-				Data:             data,
-				AccessList:       nil,
-				BlobHashes:       nil,
-				SkipNonceChecks:  false,
-				SkipFromEOACheck: false,
-			}
-			context := core.NewEVMBlockContext(header, miner.chain, nil)
-			txctx := core.NewEVMTxContext(msg)
-			evm := vm.NewEVM(context, txctx, state, miner.chainConfig, vm.Config{ /*Debug: true, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/ })
-			ret, _, err := evm.Call(vm.AccountRef(sysaddr), contractaddr, data, math.MaxUint64, new(uint256.Int))
-			if err != nil {
-				panic(err)
-			}
-			state.Finalise(true)
-			return ret, err
-		})
+		context := core.NewEVMBlockContext(header, miner.chain, nil)
+		b.SetAuraSyscall(core.MakeAuraSyscall(state, context, miner.chainConfig, *miner.chain.GetVMConfig()))
 	}
 	// Run the consensus preparation with the default or customized consensus engine.
 	// Note that the `header.Time` may be changed.

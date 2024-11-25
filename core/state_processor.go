@@ -83,32 +83,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	vmenv := vm.NewEVM(context, vm.TxContext{}, statedb, p.config, cfg)
 	b, ok := p.chain.engine.(*beacon.Beacon)
 	if ok {
-		b.SetAuraSyscall(func(contractaddr common.Address, data []byte) ([]byte, error) {
-			sysaddr := common.HexToAddress("fffffffffffffffffffffffffffffffffffffffe")
-			msg := &Message{
-				To:               &contractaddr,
-				From:             sysaddr,
-				Nonce:            0,
-				Value:            big.NewInt(0),
-				GasLimit:         math.MaxUint64,
-				GasPrice:         big.NewInt(0),
-				GasFeeCap:        nil,
-				GasTipCap:        nil,
-				Data:             data,
-				AccessList:       nil,
-				BlobHashes:       nil,
-				SkipNonceChecks:  false,
-				SkipFromEOACheck: false,
-			}
-			txctx := NewEVMTxContext(msg)
-			evm := vm.NewEVM(context, txctx, statedb, p.chain.Config(), vm.Config{ /*Debug: true, Tracer: logger.NewJSONLogger(nil, os.Stdout)*/ })
-			ret, _, err := evm.Call(vm.AccountRef(sysaddr), contractaddr, data, math.MaxUint64, new(uint256.Int))
-			if err != nil {
-				panic(err)
-			}
-			statedb.Finalise(true)
-			return ret, err
-		})
+		b.SetAuraSyscall(MakeAuraSyscall(statedb, context, p.chain.config, cfg))
 	}
 	b.AuraPrepare(p.chain, block.Header(), statedb)
 	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
@@ -334,4 +309,32 @@ func ParseDepositLogs(logs []*types.Log, config *params.ChainConfig) ([]byte, er
 		}
 	}
 	return deposits, nil
+}
+
+func MakeAuraSyscall(statedb *state.StateDB, context vm.BlockContext, chainConfig *params.ChainConfig, vmConfig vm.Config) aura.Syscall {
+	return func(contractaddr common.Address, data []byte) ([]byte, error) {
+		msg := &Message{
+			To:               &contractaddr,
+			From:             params.SystemAddress,
+			Nonce:            0,
+			Value:            big.NewInt(0),
+			GasLimit:         math.MaxUint64,
+			GasPrice:         big.NewInt(0),
+			GasFeeCap:        nil,
+			GasTipCap:        nil,
+			Data:             data,
+			AccessList:       nil,
+			BlobHashes:       nil,
+			SkipNonceChecks:  false,
+			SkipFromEOACheck: false,
+		}
+		txctx := NewEVMTxContext(msg)
+		evm := vm.NewEVM(context, txctx, statedb, chainConfig, vmConfig)
+		ret, _, err := evm.Call(vm.AccountRef(params.SystemAddress), contractaddr, data, math.MaxUint64, new(uint256.Int))
+		if err != nil {
+			panic(err)
+		}
+		statedb.Finalise(true)
+		return ret, err
+	}
 }
