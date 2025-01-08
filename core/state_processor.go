@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"os"
+	// "os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -31,7 +31,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/eth/tracers/logger"
+	// "github.com/ethereum/go-ethereum/eth/tracers/logger"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 )
@@ -383,15 +383,15 @@ func MakeAuraSyscall(statedb vm.StateDB, context vm.BlockContext, chainConfig *p
 			SkipFromEOACheck: false,
 		}
 		txctx := NewEVMTxContext(msg)
-		if contractaddr == common.HexToAddress("867305d19606aadba405ce534e303d0e225f9556") || contractaddr == common.HexToAddress("481c034c6d9441db23ea48de68bcae812c5d39ba") {
-			config := &logger.Config{
-				EnableMemory:     true,
-				DisableStack:     false,
-				DisableStorage:   false,
-				EnableReturnData: true,
-			}
-			vmConfig.Tracer = logger.NewJSONLogger(config, os.Stderr)
-		}
+		// if contractaddr == common.HexToAddress("867305d19606aadba405ce534e303d0e225f9556") || contractaddr == common.HexToAddress("481c034c6d9441db23ea48de68bcae812c5d39ba") {
+		// 	config := &logger.Config{
+		// 		EnableMemory:     true,
+		// 		DisableStack:     false,
+		// 		DisableStorage:   false,
+		// 		EnableReturnData: true,
+		// 	}
+		// 	vmConfig.Tracer = logger.NewJSONLogger(config, os.Stderr)
+		// }
 		evm := vm.NewEVM(context, txctx, statedb, chainConfig, vmConfig)
 		ret, _, err := evm.Call(vm.AccountRef(params.SystemAddress), contractaddr, data, math.MaxUint64, new(uint256.Int))
 		if err != nil {
